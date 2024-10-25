@@ -85,6 +85,7 @@ for i in range(repeat):
     output[f'A{i+1}'] = None
 
 def predict(data):
+    global output
     for prob_i in range(data.shape[0]):
         question = data.loc[prob_i, 'problem']
         for i in range(repeat):
