@@ -7,9 +7,9 @@ import re
 # import kaggle_evaluation.aimo_2_inference_server
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-DIR_REPO = '/kaggleMATH'
+DIR_REPO = '/puhome/24112456g/kaggleMATH'
 repeat = 10
-model_name = "Qwen/Qwen2.5-Math-7B-Instruct"
+model_name = "Qwen/Qwen2.5-Math-72B-Instruct"
 
 class TransformerSolver:
     def __init__(self, model_name, device="cuda"):
