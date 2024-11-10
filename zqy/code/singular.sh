@@ -9,8 +9,32 @@
 #SBATCH -J "bubu-kaggle"
 #SBATCH --gres=gpu:1
 
-SCRIPT_PATH="/puhome/24112456g/kaggleMATH/zqy/code/singular_qwen.py"
+PATH="/scratch/bbl/kaggleMATH/"
+SCRIPT_PATH="/scratch/bbl/kaggleMATH/zqy/code/singular_qwen.py"
 
-python3 $(SCRIPT_PATH)
+module load singularity/3.11.3
+
+singularity exec \
+	--bind /scratch/bbl/kaggleMATH/:/mnt/kaggleMATH \
+	--nv \
+	/scratch/bbl/singlarity_images/python_transformers.sif \
+	python /mnt/kaggleMATH/zqy/code/singular_qwen.py
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -3,13 +3,15 @@ import os
 import pandas as pd
 import polars as pl
 import re
+from time import time
 
 # import kaggle_evaluation.aimo_2_inference_server
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-DIR_REPO = '/puhome/24112456g/kaggleMATH'
-repeat = 10
+DIR_REPO = '/mnt/kaggleMATH/'
+repeat = 2
 model_name = "Qwen/Qwen2.5-Math-72B-Instruct"
+cache_dir = os.path.join(DIR_REPO, "zqy", "temp")
 
 class TransformerSolver:
     def __init__(self, model_name, device="cuda"):
@@ -20,8 +22,12 @@ class TransformerSolver:
             self.model_name,
             torch_dtype="auto",
             device_map="auto",
+            cache_dir=cache_dir,
         )
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name,
+            cache_dir=cache_dir,
+            )
 
     def solve(self, prompt, reasoning_type="CoT"):
         if reasoning_type == "CoT":
@@ -89,11 +95,16 @@ def predict(data):
     for prob_i in range(data.shape[0]):
         question = data.loc[prob_i, 'problem']
         for i in range(repeat):
+            time1 = time()
             response = solver.solve(question, reasoning_type="CoT")
             # trim the prediction
             ans = pred2int(response)
             output.loc[prob_i, f'A{i+1}'] = ans
-            output.to_csv(os.path.join(DIR_REPO, 'zqy', 'temp', 'output.csv'), index=False)
+            output.to_csv(os.path.join(DIR_REPO, 'zqy', 'temp', 'output.csv'), index=False) 
+            time2 = time()
+            print(f"Problem id: {prob_i}")
+            print(f"repeat times: {i+1}")
+            print(f"time expenditure: ", time2-time1)
             
 predict(data)
 
