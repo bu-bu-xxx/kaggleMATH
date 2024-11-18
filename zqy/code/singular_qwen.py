@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 import pandas as pd
 import polars as pl
@@ -15,12 +16,6 @@ DIR_REPO = os.path.join('/notebooks', "learningFile", "kaggleMATH")
 repeat = 2
 model_name = "Qwen/Qwen2.5-Math-7B-Instruct"
 cache_dir = os.path.join(DIR_REPO, "zqy", "temp")
-
-logging.basicConfig(
-    filename=os.path.join(DIR_REPO, "zqy", "log", "singular_qwen.log"),
-    level=logging.INFO,
-    format="%(asctime)s - %(message)s",
-)
 
 
 class TransformerSolver:
@@ -121,9 +116,17 @@ def create_file():
     os.makedirs(os.path.join(DIR_REPO, "zqy", "temp"), exist_ok=True)
     os.makedirs(os.path.join(DIR_REPO, "zqy", "output"), exist_ok=True)
     os.makedirs(os.path.join(DIR_REPO, "zqy", "log"), exist_ok=True)
+    with open(os.path.join(DIR_REPO, "zqy", "log", "singular_qwen.log"), "w") as f:
+        f.write(f"Log file created on {pd.Timestamp.now()}\n")
 
 
 if __name__ == "__main__":
+    create_file()
+    logging.basicConfig(
+    filename=os.path.join(DIR_REPO, "zqy", "log", "singular_qwen.log"),
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+    )
     # create a solver
     device = "cuda"  # the device to load the model onto
     solver = TransformerSolver(model_name, device)
@@ -135,5 +138,4 @@ if __name__ == "__main__":
     for i in range(repeat):
         output[f"A{i+1}"] = None
         
-    create_file()
     predict(data, output)
