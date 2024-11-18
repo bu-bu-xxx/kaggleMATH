@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # DIR_REPO = '/mnt/kaggleMATH/'
 # DIR_REPO = os.path.join(os.path.expanduser("~"), "learningFile", "kaggleMATH")
-DIR_REPO = os.path.join('/notebooks', "learningFile", "kaggleMATH")
+DIR_REPO = os.path.join("/notebooks", "learningFile", "kaggleMATH")
 repeat = 2
 model_name = "Qwen/Qwen2.5-Math-7B-Instruct"
 cache_dir = os.path.join(DIR_REPO, "zqy", "temp")
@@ -22,7 +22,8 @@ class TransformerSolver:
     def __init__(self, model_name, device="cuda"):
         self.model_name = model_name
         self.device = device
-        self.max_new_tokens = 10000
+        # self.max_new_tokens = 2048
+        self.max_input_tokens = 2048,
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,
             torch_dtype="auto",
@@ -57,11 +58,19 @@ class TransformerSolver:
         text = self.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
-        model_inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
+        model_inputs = self.tokenizer(
+            [text],
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_input_tokens,
+        ).to(self.device)
+
+        for key, value in model_inputs.items():
+            logging.info(f"{key}: {value.size()}")
 
         generated_ids = self.model.generate(
             **model_inputs,
-            max_new_tokens=self.max_new_tokens,
+            # max_new_tokens=self.max_new_tokens,
         )
         generated_ids = [
             output_ids[len(input_ids) :]
@@ -72,7 +81,6 @@ class TransformerSolver:
             0
         ]
         return response
-
 
 
 def pred2int(pred):
@@ -90,10 +98,14 @@ def pred2int(pred):
     else:
         return 0
 
+
 def predict(data, output):
     for prob_i in range(data.shape[0]):
         question = data.loc[prob_i, "problem"]
         for i in range(repeat):
+            logging.info("=====================================")
+            logging.info(f"Problem id: {prob_i}")
+            logging.info(f"repeat times: {i+1}")
             time1 = time()
             response = solver.solve(question, reasoning_type="CoT")
             # trim the prediction
@@ -103,13 +115,11 @@ def predict(data, output):
                 os.path.join(DIR_REPO, "zqy", "output", "output.csv"), index=False
             )
             time2 = time()
-            logging.info("=====================================")
-            logging.info(f"Problem id: {prob_i}")
-            logging.info(f"repeat times: {i+1}")
             logging.info(f"time expenditure: {time2 - time1}")
             logging.info(f"response: {response}")
             logging.info(f"answer: {ans}")
             logging.info("=====================================")
+
 
 def create_file():
     os.makedirs(os.path.join(DIR_REPO, "zqy", "dataset"), exist_ok=True)
@@ -123,9 +133,9 @@ def create_file():
 if __name__ == "__main__":
     create_file()
     logging.basicConfig(
-    filename=os.path.join(DIR_REPO, "zqy", "log", "singular_qwen.log"),
-    level=logging.INFO,
-    format="%(asctime)s - %(message)s",
+        filename=os.path.join(DIR_REPO, "zqy", "log", "singular_qwen.log"),
+        level=logging.INFO,
+        format="%(asctime)s - %(message)s",
     )
     # create a solver
     device = "cuda"  # the device to load the model onto
@@ -137,5 +147,5 @@ if __name__ == "__main__":
     output.drop(columns=["problem"], inplace=True)
     for i in range(repeat):
         output[f"A{i+1}"] = None
-        
+
     predict(data, output)
