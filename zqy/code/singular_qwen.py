@@ -22,8 +22,8 @@ class TransformerSolver:
     def __init__(self, model_name, device="cuda"):
         self.model_name = model_name
         self.device = device
-        # self.max_new_tokens = 2048
-        self.max_input_tokens = 2048,
+        self.max_new_tokens = 2048
+        self.max_input_tokens = 1024
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_name,
             torch_dtype="auto",
@@ -52,6 +52,14 @@ class TransformerSolver:
                 },
                 {"role": "user", "content": prompt},
             ]
+        elif reasoning_type == "SHORT":
+            messages = [
+                {
+                    "role": "system",
+                    "content": "Please provide a short answer, and put your final answer within \\boxed{}.",
+                },
+                {"role": "user", "content": prompt},
+            ]
         else:
             raise ValueError("Unsupported reasoning type")
 
@@ -70,7 +78,7 @@ class TransformerSolver:
 
         generated_ids = self.model.generate(
             **model_inputs,
-            # max_new_tokens=self.max_new_tokens,
+            max_new_tokens=self.max_new_tokens,
         )
         generated_ids = [
             output_ids[len(input_ids) :]
@@ -96,7 +104,7 @@ def pred2int(pred):
     if tag:
         return ans
     else:
-        return 0
+        return -1
 
 
 def predict(data, output):
@@ -110,6 +118,11 @@ def predict(data, output):
             response = solver.solve(question, reasoning_type="CoT")
             # trim the prediction
             ans = pred2int(response)
+            # check if the answer is valid
+            # if not, try SHORT prompt
+            if ans == -1:
+                response = solver.solve(question, reasoning_type="SHORT")
+                ans = pred2int(response)
             output.loc[prob_i, f"A{i+1}"] = ans
             output.to_csv(
                 os.path.join(DIR_REPO, "zqy", "output", "output.csv"), index=False
