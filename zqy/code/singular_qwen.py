@@ -4,6 +4,7 @@ import pandas as pd
 import polars as pl
 import re
 from time import time
+import logging
 
 # import kaggle_evaluation.aimo_2_inference_server
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -14,6 +15,12 @@ DIR_REPO = os.path.join('/notebooks', "learningFile", "kaggleMATH")
 repeat = 2
 model_name = "Qwen/Qwen2.5-Math-7B-Instruct"
 cache_dir = os.path.join(DIR_REPO, "zqy", "temp")
+
+logging.basicConfig(
+    filename=os.path.join(DIR_REPO, "zqy", "log", "singular_qwen.log"),
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+)
 
 
 class TransformerSolver:
@@ -72,11 +79,6 @@ class TransformerSolver:
         return response
 
 
-# create a solver
-
-device = "cuda"  # the device to load the model onto
-solver = TransformerSolver(model_name, device)
-
 
 def pred2int(pred):
     matches = re.findall(r"\\boxed{([^}]+)}", pred)
@@ -93,17 +95,7 @@ def pred2int(pred):
     else:
         return 0
 
-
-id_problem_path = os.path.join(DIR_REPO, "zqy", "dataset", "reference.csv")
-data = pd.read_csv(id_problem_path)
-output = data.copy()
-output.drop(columns=["problem"], inplace=True)
-for i in range(repeat):
-    output[f"A{i+1}"] = None
-
-
-def predict(data):
-    global output
+def predict(data, output):
     for prob_i in range(data.shape[0]):
         question = data.loc[prob_i, "problem"]
         for i in range(repeat):
@@ -113,12 +105,35 @@ def predict(data):
             ans = pred2int(response)
             output.loc[prob_i, f"A{i+1}"] = ans
             output.to_csv(
-                os.path.join(DIR_REPO, "zqy", "dataset", "output.csv"), index=False
+                os.path.join(DIR_REPO, "zqy", "output", "output.csv"), index=False
             )
             time2 = time()
-            print(f"Problem id: {prob_i}")
-            print(f"repeat times: {i+1}")
-            print(f"time expenditure: ", time2 - time1)
+            logging.info("=====================================")
+            logging.info(f"Problem id: {prob_i}")
+            logging.info(f"repeat times: {i+1}")
+            logging.info(f"time expenditure: {time2 - time1}")
+            logging.info(f"response: {response}")
+            logging.info(f"answer: {ans}")
+            logging.info("=====================================")
+
+def create_file():
+    os.makedirs(os.path.join(DIR_REPO, "zqy", "dataset"), exist_ok=True)
+    os.makedirs(os.path.join(DIR_REPO, "zqy", "temp"), exist_ok=True)
+    os.makedirs(os.path.join(DIR_REPO, "zqy", "output"), exist_ok=True)
+    os.makedirs(os.path.join(DIR_REPO, "zqy", "log"), exist_ok=True)
 
 
-predict(data)
+if __name__ == "__main__":
+    # create a solver
+    device = "cuda"  # the device to load the model onto
+    solver = TransformerSolver(model_name, device)
+
+    id_problem_path = os.path.join(DIR_REPO, "zqy", "dataset", "reference.csv")
+    data = pd.read_csv(id_problem_path)
+    output = data.copy()
+    output.drop(columns=["problem"], inplace=True)
+    for i in range(repeat):
+        output[f"A{i+1}"] = None
+        
+    create_file()
+    predict(data, output)
