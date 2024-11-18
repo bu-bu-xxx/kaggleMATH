@@ -9,9 +9,10 @@ from time import time
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # DIR_REPO = '/mnt/kaggleMATH/'
-DIR_REPO = os.path.join(os.path.expanduser("~"), "learningFile", "kaggleMATH")
+# DIR_REPO = os.path.join(os.path.expanduser("~"), "learningFile", "kaggleMATH")
+DIR_REPO = os.path.join('/notebooks', "learningFile", "kaggleMATH")
 repeat = 2
-model_name = "Qwen/Qwen2.5-Math-72B-Instruct"
+model_name = "Qwen/Qwen2.5-Math-7B-Instruct"
 cache_dir = os.path.join(DIR_REPO, "zqy", "temp")
 
 
