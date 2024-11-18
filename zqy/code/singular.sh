@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #SBATCH --partition=h07gpuq1
-#SBATCH --time=1-00:00:00
+#SBATCH --time=1-12:00:00
 #SBATCH --nodes=1
-#SBATCH --ntasks=6
+#SBATCH --ntasks=2
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=30000M
 #SBATCH -J "bubu-kaggle"
